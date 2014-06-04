@@ -301,7 +301,7 @@
 
 			this.advance();
 			
-			if(KEY_STATUS.space){
+			if(KEY_STATUS.space && !player.isShooting){
 				console.log("PELA");
 				player.isShooting = true;
 				player.bullet = new bullet(player.x,player.y+player.y/7);
