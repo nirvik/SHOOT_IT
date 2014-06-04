@@ -238,7 +238,7 @@
 		);
 		
 		
-		player.running = new Animation(player.spritesheet,4,0,31);
+		player.running = new Animation(player.spritesheet,2,0,31);
 		player.jumping = new Animation(player.spritesheet,4,9,9);
 		player.stop = new Animation(player.spritesheet,4,5,5);
 
