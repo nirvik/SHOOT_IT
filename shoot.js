@@ -182,6 +182,38 @@
 		};
 	}
 
+	function bullet(x,y){
+		
+		
+		this.image = new Image();
+		this.image.src = "./imgs/bullet.png";
+		this.width = 16;
+		this.height = 14;
+		this.x = x;
+		this.y = y;
+		this.dx = 0;
+		this.dy = 0 ;
+
+		Vector.call(this,this.x,this.y,0,0);
+
+		this.update = function(){
+			this.dx = 15;
+			this.advance();
+		};
+
+		this.draw = function(){
+			ctx.drawImage(
+				this.image,
+				this.x,
+				this.y,
+				this.width,
+				this.height
+			)
+		};
+
+	}
+	bullet.prototype = Object.create(Vector.prototype);
+
 	var player = function(player){
 
 		player.width = 110 ;
@@ -205,9 +237,6 @@
 			player.height
 		);
 		
-		//Players bullet 
-		player.bullet = new Image();
-		player.bullet.src = assetsLoader.imgs["bullet"];
 		
 		player.running = new Animation(player.spritesheet,4,0,31);
 		player.jumping = new Animation(player.spritesheet,4,9,9);
@@ -217,7 +246,11 @@
 
 		player.reset = function(){
 			player.x = 60 ;
-			player.y = 260; 
+			player.y = 260;
+			//Players bullet 
+			player.bullet = new bullet(player.x,player.y+player.y/7); 
+			console.log(player.bullet);
+
 		};
 
 		var jumpCounter = 0; //Continuously hold jump button 
@@ -231,6 +264,23 @@
 
 			else if (KEY_STATUS.left){
 				player.dx = -4;
+			}
+
+			if(KEY_STATUS.space){
+				console.log("PELA");
+				player.isShooting = true;
+			}
+
+			if(player.isShooting){
+				player.bullet.update();
+				player.bullet.draw();
+
+				if(player.bullet.x > canvas.width){
+					player.isShooting = false;
+					console.log("player is not shooting anymore");
+					player.bullet = new bullet(player.x,player.y+player.y/7);
+
+				}
 			}
 
 			if(!KEY_STATUS.right && !KEY_STATUS.left){
@@ -247,7 +297,7 @@
 
 			if(player.isJumping && jumpCounter){
 				player.dy = -10;
-				console.log(jumpCounter+","+player.isJumping)
+			//	console.log(jumpCounter+","+player.isJumping)
 			}
 
 			jumpCounter = Math.max(jumpCounter-1,0);
@@ -259,7 +309,9 @@
 			}
 
 			else{
+				
 				player.dy+=player.gravity;
+			
 			}
 
 			this.advance();
@@ -277,6 +329,7 @@
 			else if(player.dx < 0 ){
 				player.anim = player.running;
 			}
+			
 			else{ 
 				//if(player.dx == 0)
 				player.anim = player.stop;
