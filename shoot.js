@@ -266,22 +266,7 @@
 				player.dx = -4;
 			}
 
-			if(KEY_STATUS.space){
-				console.log("PELA");
-				player.isShooting = true;
-			}
 
-			if(player.isShooting){
-				player.bullet.update();
-				player.bullet.draw();
-
-				if(player.bullet.x > canvas.width){
-					player.isShooting = false;
-					console.log("player is not shooting anymore");
-					player.bullet = new bullet(player.x,player.y+player.y/7);
-
-				}
-			}
 
 			if(!KEY_STATUS.right && !KEY_STATUS.left){
 				player.dx = 0;
@@ -316,7 +301,22 @@
 
 			this.advance();
 			
+			if(KEY_STATUS.space){
+				console.log("PELA");
+				player.isShooting = true;
+				player.bullet = new bullet(player.x,player.y+player.y/7);
+			}
 
+			if(player.isShooting){
+				player.bullet.update();
+				player.bullet.draw();
+
+				if(player.bullet.x > canvas.width){
+					player.isShooting = false;
+					console.log("player is not shooting anymore");
+
+				}
+			}
 			if(player.dy<0){
 				//Jumping 
 				player.anim = player.jumping;
