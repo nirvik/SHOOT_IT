@@ -506,6 +506,27 @@
 
 			//To prevent Infinite splitting 
 
+			if(level<maxLevel && objects.length >= maxObjects){
+
+				if(this.nodes[0] == null ){
+					this.split();
+				}
+
+				var i = 0;
+				while(i<objects.length){
+
+					var index = -1;
+					index = this.getIndex(objects[i]); // find out which quad it belongs to
+					if(index != -1){
+						this.nodes[index].insert(objects[i]);
+					}
+					else{
+						i+=1;
+					}
+				}
+
+			}
+
 		};
 
 	}
