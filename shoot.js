@@ -229,7 +229,7 @@
 
 		//If the player shoots release the bullet ; No need of particular animation
 		player.isShooting = false;
-
+		player.bullet_collection = [];
 		//Initializing players spritesheet 
 		player.spritesheet = new SpriteSheet(
 			assetsLoader.imgs["shooter"],
@@ -248,7 +248,7 @@
 			player.x = 60 ;
 			player.y = 260;
 			//Players bullet 
-			player.bullet = new bullet(player.x,player.y+player.y/7); 
+			player.bullet_collection.push(new bullet(player.x,player.y+player.y/7)); 
 			console.log(player.bullet);
 
 		};
@@ -302,9 +302,10 @@
 			this.advance();
 			
 			if(KEY_STATUS.space && !player.isShooting){
-				console.log("PELA");
+				//console.log("PELA");
 				player.isShooting = true;
 				player.bullet = new bullet(player.x,player.y+player.y/7);
+				//player.bullet.collection.push(new bullet(player.x,player.y+player.y/7));
 			}
 
 			if(player.isShooting){
@@ -349,6 +350,165 @@
 		return player;
 
 	}(Object.create(Vector.prototype));
+
+	function QuadTree(boundBox,lvl){
+
+		var objects = [];
+		this.bounds = boundBox || {
+
+			x:0,
+			y:0,
+			width:0,
+			height:0
+		};
+
+		this.nodes = [];
+		var level = lvl || 0;
+		var maxLevel = 4;
+		var maxObjects = 5;
+
+		this.clear = function(){
+
+			for(var i = 0 ;i<this.nodes.length;i++){
+				this.nodes[i].clear();
+			}
+
+			this.nodes = [];
+
+		};
+
+		this.getIndex = function(obj){
+
+			var index = -1;
+			var verticalMidPoint = this.bounds.height/2;
+			var horizontalMidPoint = this.bounds.width/2;
+
+			var left = (obj.x+this.bounds.width<verticalMidPoint && obj.x<verticalMidPoint);
+			var right = (obj.x > verticalMidPoint);
+
+			if(left){
+				if(obj.y > horizontalMidPoint && obj.y + obj.height>horizontalMidPoint){
+					index = 2;
+				}
+
+				if(obj.y < horizontalMidPoint){
+					index = 1;
+				}
+			}
+
+			if(right){
+				if(obj.y > horizontalMidPoint && obj.y + obj.height>horizontalMidPoint){
+					index = 3;
+				}
+
+				if(obj.y < horizontalMidPoint){
+					index = 0;
+				}
+			}
+
+			return index;
+
+		};
+
+		this.getAllObjects = function(returnedObject){
+
+			for(var i = 0;i<this.nodes.length;i++){
+				this.nodes[i].getAllObjects(returnedObject);
+			}
+
+			for(var i = 0;i<objects.length;i++){
+				returnedObject.push(objects[i]);
+			}
+		};
+
+		this.findObjects = function(returnedObject,obj){
+
+			var index = this.getIndex(obj);
+
+			if(index!=-1 && this.nodes.length){
+				this.nodes[index].findObjects(returnedObject,obj);
+			}
+
+			for(var i=0;i<objects.length;i++){
+				returnedObject.push(objects[i]);
+			}
+
+			return returnedObject;
+
+		};
+
+		this.split = function(){
+
+			var subWidth = (this.bounds.width/2)|| 0;
+			var subHeight = (this.bounds.height/2)|| 0;
+			
+			this.nodes[0] = new QuadTree({
+				
+				x: this.bounds.x+subWidth,
+				y: this.bounds.y,
+				width:subWidth,
+				height:subHeight
+			
+			},level+1);
+
+			this.nodes[1] = new QuadTree({
+				
+				x: this.bounds.x,
+				y: this.bounds.y,
+				width:subWidth,
+				height:subHeight
+			
+			},level+1);
+
+			this.nodes[2] = new QuadTree({
+				
+				x: this.bounds.x,
+				y: this.bounds.y+subHeight,
+				width:subWidth,
+				height:subHeight
+			
+			},level+1);
+
+			this.nodes[3] = new QuadTree({
+				
+				x: this.bounds.x+subWidth,
+				y: this.bounds.y+subHeight,
+				width:subWidth,
+				height:subHeight
+			
+			},level+1);
+		};
+
+		this.insert = function(obj){
+
+			if(typeof(obj) == "undefined")
+				return;
+
+			if(obj instanceof Array){
+				
+				for(var i=0;i<obj.length;i++){
+					this.insert(obj[i]);
+				}
+
+			}
+
+			if(this.nodes.length){
+				
+				var index = -1;
+				index = this.getIndex(obj);
+
+				if(index != -1){
+					this.nodes[i].insert(obj);
+				}
+			}
+
+			objects.push(obj);
+
+			//To prevent Infinite splitting 
+
+		};
+
+	}
 
 	function animate(){
 
