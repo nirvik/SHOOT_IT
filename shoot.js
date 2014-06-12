@@ -4,8 +4,11 @@
 	ctx = canvas.getContext("2d");
 
 	var player = {};
+	var enemy = {};
 	var height = canvas.height;
 	var widht  = canvas.width ;
+
+	var quadTree;
 
 	window.requestAnimFrame = function(){
 	    return (
@@ -24,10 +27,11 @@
 
 		this.imgs ={
 			"shooter" : "./imgs/shooter.jpg",
-			"bullet"  : "./imgs/bullet.png"
+			"bullet"  : "./imgs/bullet.png",
+			"zombie"  : "./imgs/skeleton.png"
 		};
 
-		this.total = Object.keys(this.imgs).length;
+		total = Object.keys(this.imgs).length;
 		var loaded = 0;
 
 		this.finished = function() {
@@ -182,13 +186,17 @@
 		};
 	}
 
-	function bullet(x,y){
+	function Bullet(x,y){
 		
-		
+		this.type = "bullet"
+		this.collidableWith = "zombie";
+		this.isColliding = false;
+
 		this.image = new Image();
 		this.image.src = "./imgs/bullet.png";
 		this.width = 16;
 		this.height = 14;
+		
 		this.x = x;
 		this.y = y;
 		this.dx = 0;
@@ -202,24 +210,42 @@
 		};
 
 		this.draw = function(){
-			ctx.drawImage(
-				this.image,
-				this.x,
-				this.y,
-				this.width,
-				this.height
-			)
+
+			ctx.clearRect(this.x-1,this.y-1,this.width+2,this.height+2);
+
+			if(this.isColliding){
+				return true;
+			}
+
+			else if(this.x > canvas.width){
+				return true;
+			}
+
+			else{
+				
+				ctx.drawImage(
+					this.image,
+					this.x,
+					this.y,
+					this.width,
+					this.height
+				)
+
+				return false;
+			}
 		};
 
 	}
-	bullet.prototype = Object.create(Vector.prototype);
+	Bullet.prototype = Object.create(Vector.prototype);
 
 	var player = function(player){
 
 		player.width = 110 ;
 		player.height = 126 ;
-
 		
+		player.isColliding = false;
+		player.collidableWith = "zombie";
+		player.type = "shooter";
 		
 		player.dx = 0;
 		player.dy = 0;
@@ -229,7 +255,7 @@
 
 		//If the player shoots release the bullet ; No need of particular animation
 		player.isShooting = false;
-		player.bullet_collection = [];
+		//player.bullet_collection = [];
 		//Initializing players spritesheet 
 		player.spritesheet = new SpriteSheet(
 			assetsLoader.imgs["shooter"],
@@ -247,10 +273,7 @@
 		player.reset = function(){
 			player.x = 60 ;
 			player.y = 260;
-			//Players bullet 
-			player.bullet_collection.push(new bullet(player.x,player.y+player.y/7)); 
-			console.log(player.bullet);
-
+			
 		};
 
 		var jumpCounter = 0; //Continuously hold jump button 
@@ -293,10 +316,17 @@
 				player.isJumping = false;
 			}
 
+
+
 			else{
 				
 				player.dy+=player.gravity;
 			
+			}
+
+			if(player.isColliding){
+				player.isColliding = false;
+				player.dx = -2;
 			}
 
 			this.advance();
@@ -304,20 +334,18 @@
 			if(KEY_STATUS.space && !player.isShooting){
 				//console.log("PELA");
 				player.isShooting = true;
-				player.bullet = new bullet(player.x,player.y+player.y/7);
-				//player.bullet.collection.push(new bullet(player.x,player.y+player.y/7));
+				player.bullet = new Bullet(player.x,player.y+player.y/7);
+				
 			}
 
 			if(player.isShooting){
 				player.bullet.update();
-				player.bullet.draw();
 
-				if(player.bullet.x > canvas.width){
+				if(player.bullet.draw()){
 					player.isShooting = false;
-					console.log("player is not shooting anymore");
-
 				}
 			}
+
 			if(player.dy<0){
 				//Jumping 
 				player.anim = player.jumping;
@@ -349,6 +377,61 @@
 
 		return player;
 
+	}(Object.create(Vector.prototype));
+
+	var enemy = function(enemy){
+
+		enemy.type = "zombie";
+		enemy.isColliding = false;
+		enemy.collidableWith = "bullet"
+		
+		enemy.width = 35.5;
+		enemy.height = 72;
+
+		enemy.spritesheet = new SpriteSheet(assetsLoader.imgs["zombie"],
+			enemy.width,
+			enemy.height
+		);
+		enemy.walk = new Animation(enemy.spritesheet,5,1,3);//10,1,8);
+		enemy.shot = new Animation(enemy.spritesheet,10,6,8);
+		enemy.anim = enemy.walk;
+
+		enemy.dx = 0;
+		enemy.dy = 0;
+
+		Vector.call(enemy,0,0,0,0);
+
+		enemy.reset = function(){
+			
+			enemy.x = 800 - 100;
+			enemy.y = 260;
+			enemy.dx = -0.7;
+			enemy.isColliding = false;
+		};
+
+		enemy.update = function(){
+			
+			if(enemy.isColliding){
+				enemy.anim = enemy.shot;
+				enemy.dx = -0.5;
+				enemy.isColliding = false;
+			}
+
+			else{
+				enemy.anim = enemy.walk;
+				if(enemy.dx != -0.7){
+					enemy.dx = -0.7;
+				}
+			}
+
+			this.advance();
+			enemy.anim.update();
+		};
+
+		enemy.draw = function(){
+			enemy.anim.draw(enemy.x,enemy.y);
+		};
+		return enemy;
 	}(Object.create(Vector.prototype));
 
 	function QuadTree(boundBox,lvl){
@@ -531,17 +614,50 @@
 
 	}
 
+	function detectCollision(){
+		
+		var objects = [];
+		quadTree.insert(objects);
+
+		for(var x = 0;x<objects.length;x++){
+			
+			quadTree.findObjects(obj=[],objects[x]);
+			
+			for(var y = 0;y<obj.length;y++){
+				
+				if(objects[x].collidableWith = obj[y].type 
+					&& objects[x].x<obj[y].x && objects[x].x+objects[x].width>obj[y].x){
+					objects[x].isColliding = true;
+					obj[y].isColliding = true;
+				}
+			}
+		}
+	}
+
 	function animate(){
 
 		requestAnimFrame(animate);
 		ctx.clearRect(0,0,canvas.width,canvas.height);
+		quadTree.clear();
+		quadTree.insert(player);
+		quadTree.insert(player.bullet);
+	//	quadTree.insert(enemy);
+
+		console.log(quadTree);
 		player.update();
 		player.draw();
+		enemy.update();
+		enemy.draw();
+	//	detectCollision();
 	}
 
 	function startGame(){
 
+		quadTree = new QuadTree({x:0,y:0,width:800,height:800});
+		enemy.reset();
 		player.reset();
+
+		console.log(enemy);
 		animate();
 
 	}
