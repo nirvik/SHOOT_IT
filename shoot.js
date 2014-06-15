@@ -411,6 +411,7 @@
 
 		enemy.update = function(){
 			
+			enemy.anim = enemy.walk;
 			if(enemy.isColliding){
 				enemy.anim = enemy.shot;
 				enemy.dx = 0;
@@ -503,7 +504,6 @@
 			for(var i = 0;i<objects.length;i++){
 				returnedObject.push(objects[i]);
 			}
-
 			return returnedObject;
 		};
 
@@ -632,8 +632,7 @@
 					&& objects[x].x+objects[x].width > obj[y].x
 					 && objects[x].y+objects[x].height>obj[y].y
 					 && objects[x].y < obj[y].y+obj[y].height){
-
-					console.log("it fucking collided");
+					
 					objects[x].isColliding = true;
 					obj[y].isColliding = true;
 				}
