@@ -413,8 +413,8 @@
 			
 			if(enemy.isColliding){
 				enemy.anim = enemy.shot;
-				enemy.dx = -0.5;
-				enemy.isColliding = false;
+				enemy.dx = 0;
+
 			}
 
 			else{
@@ -452,6 +452,7 @@
 
 		this.clear = function(){
 
+			objects = [];
 			for(var i = 0 ;i<this.nodes.length;i++){
 				this.nodes[i].clear();
 			}
@@ -502,6 +503,8 @@
 			for(var i = 0;i<objects.length;i++){
 				returnedObject.push(objects[i]);
 			}
+
+			return returnedObject;
 		};
 
 		this.findObjects = function(returnedObject,obj){
@@ -581,7 +584,7 @@
 				index = this.getIndex(obj);
 
 				if(index != -1){
-					this.nodes[i].insert(obj);
+					this.nodes[index].insert(obj);
 				}
 			}
 
@@ -589,7 +592,7 @@
 
 			//To prevent Infinite splitting 
 
-			if(level<maxLevel && objects.length >= maxObjects){
+			if(level<maxLevel && objects.length > maxObjects){
 
 				if(this.nodes[0] == null ){
 					this.split();
@@ -617,19 +620,25 @@
 	function detectCollision(){
 		
 		var objects = [];
-		quadTree.insert(objects);
-
+		quadTree.getAllObjects(objects);
+		
 		for(var x = 0;x<objects.length;x++){
-			
 			quadTree.findObjects(obj=[],objects[x]);
-			
-			for(var y = 0;y<obj.length;y++){
+			for(var y = 0;y<obj.length;y++){		
+				//console.log(objects[x].collidableWith+"<->"+obj[y].type)
 				
-				if(objects[x].collidableWith = obj[y].type 
-					&& objects[x].x<obj[y].x && objects[x].x+objects[x].width>obj[y].x){
+				if(objects[x].collidableWith == obj[y].type 
+					&& objects[x].x<obj[y].x+obj[y].width 
+					&& objects[x].x+objects[x].width > obj[y].x
+					 && objects[x].y+objects[x].height>obj[y].y
+					 && objects[x].y < obj[y].y+obj[y].height){
+
+					console.log("it fucking collided");
 					objects[x].isColliding = true;
 					obj[y].isColliding = true;
 				}
+					
+
 			}
 		}
 	}
@@ -641,14 +650,14 @@
 		quadTree.clear();
 		quadTree.insert(player);
 		quadTree.insert(player.bullet);
-	//	quadTree.insert(enemy);
+		quadTree.insert(enemy);
 
 	//	console.log(quadTree);
 		player.update();
 		player.draw();
 		enemy.update();
 		enemy.draw();
-	//	detectCollision();
+		detectCollision();
 	}
 
 	function startGame(){
