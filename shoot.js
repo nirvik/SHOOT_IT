@@ -643,7 +643,7 @@
 		quadTree.insert(player.bullet);
 	//	quadTree.insert(enemy);
 
-		console.log(quadTree);
+	//	console.log(quadTree);
 		player.update();
 		player.draw();
 		enemy.update();
